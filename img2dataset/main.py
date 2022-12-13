@@ -9,6 +9,7 @@ from .writer import (
     WebDatasetSampleWriter,
     FilesSampleWriter,
     ParquetSampleWriter,
+    TSVSampleWriter,
     TFRecordSampleWriter,
     DummySampleWriter,
 )
@@ -153,6 +154,8 @@ def download(
         sample_writer_class = WebDatasetSampleWriter
     elif output_format == "parquet":
         sample_writer_class = ParquetSampleWriter  # type: ignore
+    elif output_format == "tsv":
+        sample_writer_class = TSVSampleWriter
     elif output_format == "files":
         sample_writer_class = FilesSampleWriter  # type: ignore
     elif output_format == "tfrecord":
@@ -161,6 +164,14 @@ def download(
         sample_writer_class = DummySampleWriter  # type: ignore
     else:
         raise ValueError(f"Invalid output format {output_format}")
+
+    if encode_format not in ["jpg", "png", "webp"]:
+        raise ValueError(f"Invalid encode format {encode_format}")
+    if encode_format == "png":
+        if encode_quality < 0 or encode_quality > 9:
+            raise ValueError(
+                f"For png, encode quality represents compression which must be between 0 and 9, got {encode_quality}"
+            )
 
     resizer = Resizer(
         image_size=image_size,

@@ -8,6 +8,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import webdataset as wds
+import base64
 
 
 class BufferedParquetWriter:
@@ -91,6 +92,85 @@ class ParquetSampleWriter:
     def close(self):
         self.buffered_parquet_writer.close()
 
+
+class BufferedTSVWriter:
+    """Write samples to parquet files incrementally with a buffer"""
+
+    def __init__(self, output_file, buffer_size=100):
+        self.buffer_size = buffer_size
+        self._initiatlize_buffer()
+        fs, output_path = fsspec.core.url_to_fs(output_file)
+        self.output_fd = fs.open(output_path, "wb")
+
+    def _initiatlize_buffer(self):
+        self.current_buffer_size = 0
+        self.buffer = []
+
+    def _add_sample_to_buffer(self, sample):
+        self.buffer.append(sample)
+        self.current_buffer_size += 1
+
+    def write(self, sample):
+        if self.current_buffer_size >= self.buffer_size:
+            self.flush()
+        self._add_sample_to_buffer(sample)
+
+    def flush(self):
+        """Write the buffer to disk"""
+        if self.current_buffer_size == 0:
+            return
+        self.tsv_writer(self.buffer, self.output_fd)
+        self._initiatlize_buffer()
+
+    def close(self):
+        self.flush()
+        self.output_fd.close()
+            
+    def tsv_writer(self, values, fd, sep='\t'):
+        sep = sep.encode()
+        assert values is not None
+        for value in values:
+            assert value is not None
+            value = map(lambda v: v if type(v) == bytes else str(v).encode(), value)
+            v = sep.join(value) + b'\n'
+            fd.write(v)
+
+        
+class TSVSampleWriter:
+    """TSVSampleWriter is a image+caption writer to parquet"""
+    def __init__(
+        self,
+        shard_id,
+        output_folder,
+        save_caption,
+        oom_shard_count,
+        schema,
+        encode_format,
+    ):
+        self.oom_shard_count = oom_shard_count
+        self.encode_format = encode_format
+#         schema = schema.append(pa.field(encode_format, pa.binary()))
+        shard_name = "{shard_id:0{oom_shard_count}d}".format(  # pylint: disable=consider-using-f-string
+            shard_id=shard_id, oom_shard_count=oom_shard_count
+        )
+        output_file = f"{output_folder}/{shard_name}.tsv"
+        self.output_file = output_file
+        self.buffered_tsv_writer = BufferedTSVWriter(output_file, 100)
+        self.save_caption = save_caption
+
+    def write(self, img_str, key, caption, meta):
+        """Keep sample in memory then write to disk when close() is called"""
+        if img_str is not None:
+            image_content = base64.b64encode(img_str)
+            if self.save_caption:
+                meta["captions"] = [str(caption) if caption is not None else ""]
+        else:
+            meta["captions"] = [""]
+        self.buffered_tsv_writer.write((key, json.dumps([meta]), image_content))
+
+    def close(self):
+        self.buffered_tsv_writer.close()
+        
 
 class WebDatasetSampleWriter:
     """WebDatasetSampleWriter is a image+caption writer to webdataset"""
