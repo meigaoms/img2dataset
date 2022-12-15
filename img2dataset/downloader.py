@@ -231,12 +231,12 @@ class Downloader:
                         status = "failed_to_download"
                         status_dict.increment(error_message)
                         meta["status"] = status
-                        sample_writer.write(
-                            None,
-                            str_key,
-                            sample_data[caption_indice] if caption_indice is not None else None,
-                            meta,
-                        )
+                        # sample_writer.write(
+                        #     None,
+                        #     str_key,
+                        #     sample_data[caption_indice] if caption_indice is not None else None,
+                        #     meta,
+                        # )
                         semaphore.release()
                         continue
                     img_stream.seek(0)
@@ -254,12 +254,12 @@ class Downloader:
                         status_dict.increment(error_message)
                         meta["status"] = status
                         meta["error_message"] = error_message
-                        sample_writer.write(
-                            None,
-                            str_key,
-                            sample_data[caption_indice] if caption_indice is not None else None,
-                            meta,
-                        )
+                        # sample_writer.write(
+                        #     None,
+                        #     str_key,
+                        #     sample_data[caption_indice] if caption_indice is not None else None,
+                        #     meta,
+                        # )
                         img_stream.close()
                         del img_stream
                         semaphore.release()
@@ -268,13 +268,12 @@ class Downloader:
                         failed_to_qualify += 1
                         status_dict.increment(error_message)
                         meta["error_message"] = "non_rgba"
-                        sample_writer.write(
-                            None,
-                            str_key,
-                            sample_data[caption_indice] if caption_indice is not None else None,
-                            "placeholder",
-                            meta,
-                        )
+                        # sample_writer.write(
+                        #     None,
+                        #     str_key,
+                        #     sample_data[caption_indice] if caption_indice is not None else None,
+                        #     meta,
+                        # )
                         img_stream.close()
                         del img_stream
                         semaphore.release()

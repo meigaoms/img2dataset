@@ -164,9 +164,9 @@ class TSVSampleWriter:
             image_content = base64.b64encode(img_str)
             if self.save_caption:
                 meta["captions"] = [str(caption) if caption is not None else ""]
-        else:
-            meta["captions"] = [""]
-        self.buffered_tsv_writer.write((key, json.dumps([meta]), image_content))
+        # else:
+        #     meta["captions"] = [""]
+            self.buffered_tsv_writer.write((key, json.dumps([meta]), image_content))
 
     def close(self):
         self.buffered_tsv_writer.close()
