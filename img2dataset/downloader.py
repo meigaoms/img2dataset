@@ -17,6 +17,7 @@ import numpy as np
 import fsspec
 from .logger import CappedCounter
 from .logger import write_stats
+from .filter import qualified_rgba
 
 
 def is_disallowed(headers, user_agent_token, disallowed_header_directives):
@@ -77,58 +78,6 @@ def compute_key(key, shard_id, oom_sample_per_shard, oom_shard_count):
     return str_key
 
   
-def is_ellipse(mask):
-    points = np.column_stack(np.where(mask.transpose()))
-    hull = cv2.convexHull(points)
-    ((cx, cy), (ew, eh), angle) = cv2.fitEllipse(hull)
-    zero_mask = np.zeros((mask.shape[0], mask.shape[1]), dtype=np.uint8)
-    eclipse_mask = cv2.ellipse(zero_mask, (int(cx), int(cy)), (int(ew/2), int(eh/2)), angle, 0, 360, 255, -1)
-    ell_area = np.sum(eclipse_mask>0)
-    all_fg_area = np.sum(mask)
-    ell_fg_area = np.sum(mask*(eclipse_mask>0))
-    
-    if ell_fg_area / float(all_fg_area) > 0.9 and  ell_fg_area / float(ell_area) > 0.9:
-        return True
-    else:
-        return False
-
-def filter(img_str):
-    try:
-        img_str.seek(0)
-        file_bytes = np.asarray(bytearray(img_str.read()), dtype=np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_UNCHANGED)
-        # Discard non-rgba images
-        if len(img.shape) == 2 or img.shape[2]<4:
-            return False
-        # Discard small images
-        if min(img.shape[0], img.shape[1])<500:
-            return False
-        mask = img[:,:,3]
-        binary_mask = mask > 128
-        trans_mask = np.logical_and(mask>0.05*255, mask<0.95*255)
-        fg_ys, fg_xs = np.nonzero(binary_mask)
-        # Discard all black mask
-        if fg_ys.size == 0:
-            return False
-        # ??
-        if np.sum(trans_mask)/float(np.sum(binary_mask)) > 0.5:
-            return False
-        min_x, max_x = np.min(fg_xs), np.max(fg_xs)
-        min_y, max_y = np.min(fg_ys), np.max(fg_ys)
-
-        bbox_area = (max_x-min_x+1)*(max_y-min_y+1)
-        fg_area = np.sum(binary_mask[min_y:max_y+1, min_x:max_x+1])
-
-        fg_h, fg_w = max_y - min_y + 1, max_x - min_x +1
-        fg_ratio = float(fg_area) / (bbox_area + 0.01)
-        if fg_area < 16 or fg_ratio > 0.88:
-            return False
-        is_ell = is_ellipse(binary_mask)
-        if is_ell:
-            return False
-        return True
-    except:
-        return False
   
   
 class Downloader:
@@ -315,7 +264,7 @@ class Downloader:
                         del img_stream
                         semaphore.release()
                         continue
-                    if (not filter(img_stream)):
+                    if (not qualified_rgba(img_stream)):
                         failed_to_qualify += 1
                         status_dict.increment(error_message)
                         meta["error_message"] = "non_rgba"
