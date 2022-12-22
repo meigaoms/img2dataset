@@ -112,15 +112,15 @@ def entropy(img_str):
     res = 0
 
     img_str.seek(0)
-    file_bytes = np.asarray(bytearray(img_str.read()), dtype=np.uint8)
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    # image = cv2.imread(img_path,0)
+    img_content = bytearray(img_str.read())
+    file_bytes = np.asarray(img_content, dtype=np.uint8)
+    image = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
+#     image = cv2.imread(img_path,0)
     h,w = image.shape
     pixel = h*w
     # with open(img_path, "rb") as f:
-    size = len(img_str)
+    size = len(img_content)
     bpp = float(size*8) / pixel
-    # print(bpp)
     img = np.array(image)
     for i in range(len(img)):
         for j in range(len(img[i])):
