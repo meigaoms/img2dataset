@@ -17,7 +17,7 @@ import numpy as np
 import fsspec
 from .logger import CappedCounter
 from .logger import write_stats
-from .filter import qualified_rgba
+from .filter import qualified_rgba, imquality_highresolution
 
 
 def is_disallowed(headers, user_agent_token, disallowed_header_directives):
@@ -264,7 +264,7 @@ class Downloader:
                         del img_stream
                         semaphore.release()
                         continue
-                    if (not qualified_rgba(img_stream)):
+                    if (not imquality_highresolution(img_stream)):
                         failed_to_qualify += 1
                         status_dict.increment(error_message)
                         meta["error_message"] = "non_rgba"
