@@ -157,6 +157,9 @@ class Resizer:
                     return None, None, None, None, None, "aspect ratio too large"
 
                 # resizing in following conditions
+                ### XUGA: scale down an image only when the longest side is beyond image_size
+                if max(original_height, original_width) > self.image_size:
+                    self.resize_mode = ResizeMode.keep_ratio
                 if self.resize_mode in (ResizeMode.keep_ratio, ResizeMode.center_crop):
                     downscale = min(original_width, original_height) > self.image_size
                     if not self.resize_only_if_bigger or downscale:
