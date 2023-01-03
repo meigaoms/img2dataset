@@ -2,13 +2,14 @@
 
 import json
 import os
-
+import tempfile
 import fsspec
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import webdataset as wds
 import base64
+import shutil
 
 
 class BufferedParquetWriter:
@@ -153,9 +154,11 @@ class TSVSampleWriter:
         shard_name = "{shard_id:0{oom_shard_count}d}".format(  # pylint: disable=consider-using-f-string
             shard_id=shard_id, oom_shard_count=oom_shard_count
         )
+        temp_file = tempfile.NamedTemporaryFile()
+        self.temp_file = temp_file.name
         output_file = f"{output_folder}/{shard_name}.tsv"
         self.output_file = output_file
-        self.buffered_tsv_writer = BufferedTSVWriter(output_file, 100)
+        self.buffered_tsv_writer = BufferedTSVWriter(self.temp_file, 20)
         self.save_caption = save_caption
 
     def write(self, img_str, key, caption, meta):
@@ -170,6 +173,9 @@ class TSVSampleWriter:
 
     def close(self):
         self.buffered_tsv_writer.close()
+        shutil.copy(self.temp_file, self.output_file)
+        os.remove(self.temp_file)
+        
         
 
 class WebDatasetSampleWriter:
