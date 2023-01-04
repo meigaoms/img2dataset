@@ -173,8 +173,9 @@ class TSVSampleWriter:
 
     def close(self):
         self.buffered_tsv_writer.close()
-        shutil.copy(self.temp_file, self.output_file)
-        os.remove(self.temp_file)
+        if os.path.exists(self.temp_file):
+            shutil.copy(self.temp_file, self.output_file)
+            os.remove(self.temp_file)
         
         
 
