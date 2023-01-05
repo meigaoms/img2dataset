@@ -6,6 +6,7 @@ import os
 import random
 from skimage.restoration import estimate_sigma
 import matplotlib.pyplot as plt
+import albumentations as A
 
 
 '''
@@ -114,13 +115,13 @@ def entropy(img_str):
     img_str.seek(0)
     img_content = bytearray(img_str.read())
     file_bytes = np.asarray(img_content, dtype=np.uint8)
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
-#     image = cv2.imread(img_path,0)
-    h,w = image.shape
+    image_in = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
+    h,w = image_in.shape
     pixel = h*w
-    # with open(img_path, "rb") as f:
     size = len(img_content)
     bpp = float(size*8) / pixel
+
+    image = A.smallest_max_size(image_in, 512, interpolation="area")
     img = np.array(image)
     for i in range(len(img)):
         for j in range(len(img[i])):
@@ -171,7 +172,7 @@ def select_with_th(hist, th, range_width=0):
             else:
                 return True
 
-def imquality_highresolution(img_str,reason_printer=False):
+def imquality_highresolution(img_str, orig_width, orig_height, reason_printer=False):
     '''
     input :
         filepath
@@ -193,14 +194,14 @@ def imquality_highresolution(img_str,reason_printer=False):
             e)20 >noise_sigma>1e-2
     '''
     try:
-        (h,w),bpp,res,noise_sigma,hist,ratio = entropy(img_str)
+        if orig_width<1000 or orig_height<1000 :
+            if reason_printer:
+                print('for low resolution')
+            return False
+        (h_new,w_new),bpp,res,noise_sigma,hist,ratio = entropy(img_str)
         if not hist:
             if reason_printer:
                 print('for rgb value center on one value > 0.7')
-            return False
-        elif h<1000 or w<1000 :
-            if reason_printer:
-                print('for low resolution')
             return False
         elif bpp <=1 :
             if reason_printer:
