@@ -222,6 +222,7 @@ def imquality_highresolution(img_str,reason_printer=False):
             return True
     except:
         print('Error in process pic:')
+        return False
 
 
 def is_ellipse(mask):
