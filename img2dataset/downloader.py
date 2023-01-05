@@ -267,7 +267,7 @@ class Downloader:
                     if (not imquality_highresolution(img_stream)):
                         failed_to_qualify += 1
                         status_dict.increment(error_message)
-                        meta["error_message"] = "non_rgba"
+                        meta["error_message"] = "not_qualified"
                         # sample_writer.write(
                         #     None,
                         #     str_key,

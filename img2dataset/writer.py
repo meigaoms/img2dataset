@@ -154,10 +154,9 @@ class TSVSampleWriter:
         shard_name = "{shard_id:0{oom_shard_count}d}".format(  # pylint: disable=consider-using-f-string
             shard_id=shard_id, oom_shard_count=oom_shard_count
         )
-        temp_file = tempfile.NamedTemporaryFile()
-        self.temp_file = temp_file.name
-        output_file = f"{output_folder}/{shard_name}.tsv"
-        self.output_file = output_file
+        temp_file = tempfile.mkdtemp()
+        self.temp_file = os.path.join(temp_file, f"{shard_name}.tsv")
+        self.output_file = os.path.join(output_folder, f"{shard_name}.tsv")
         self.buffered_tsv_writer = BufferedTSVWriter(self.temp_file, 20)
         self.save_caption = save_caption
 
