@@ -264,7 +264,7 @@ class Downloader:
                         del img_stream
                         semaphore.release()
                         continue
-                    if (not imquality_highresolution(img, original_width, original_height)):
+                    if (not imquality_highresolution(img_stream, original_width, original_height)):
                         failed_to_qualify += 1
                         status_dict.increment(error_message)
                         meta["error_message"] = "not_qualified"

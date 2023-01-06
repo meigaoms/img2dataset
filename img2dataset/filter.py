@@ -121,7 +121,7 @@ def entropy(img_str):
     size = len(img_content)
     bpp = float(size*8) / pixel
 
-    image = A.smallest_max_size(image_in, 512, interpolation="area")
+    image = A.smallest_max_size(image_in, max_size=512, interpolation=cv2.INTER_LINEAR)
     img = np.array(image)
     for i in range(len(img)):
         for j in range(len(img[i])):
@@ -193,37 +193,37 @@ def imquality_highresolution(img_str, orig_width, orig_height, reason_printer=Fa
             d)entroy>6
             e)20 >noise_sigma>1e-2
     '''
-    try:
-        if orig_width<1000 or orig_height<1000 :
-            if reason_printer:
-                print('for low resolution')
-            return False
-        (h_new,w_new),bpp,res,noise_sigma,hist,ratio = entropy(img_str)
-        if not hist:
-            if reason_printer:
-                print('for rgb value center on one value > 0.7')
-            return False
-        elif bpp <=1 :
-            if reason_printer:
-                print('for highly compressed ')
-            return False
-        elif res <= 4.9183 :
-            if reason_printer:
-                print('for low  image entropy ')
-            return False
-        elif ratio <= 0.005 :
-            if reason_printer:
-                print('for low  high frequency ratio ')
-            return False
-        elif noise_sigma <= 1e-2 or noise_sigma > 35:
-            if reason_printer:
-                print('for high noise level  ')
-            return False
-        else:
-            return True
-    except:
-        print('Error in process pic:')
+    # try:
+    if orig_width<1000 or orig_height<1000 :
+        if reason_printer:
+            print('for low resolution')
         return False
+    (h_new,w_new),bpp,res,noise_sigma,hist,ratio = entropy(img_str)
+    if not hist:
+        if reason_printer:
+            print('for rgb value center on one value > 0.7')
+        return False
+    elif bpp <=1 :
+        if reason_printer:
+            print('for highly compressed ')
+        return False
+    elif res <= 4.9183 :
+        if reason_printer:
+            print('for low  image entropy ')
+        return False
+    elif ratio <= 0.005 :
+        if reason_printer:
+            print('for low  high frequency ratio ')
+        return False
+    elif noise_sigma <= 1e-2 or noise_sigma > 35:
+        if reason_printer:
+            print('for high noise level  ')
+        return False
+    else:
+        return True
+    # except:
+    #     print('Error in process pic:')
+    #     return False
 
 
 def is_ellipse(mask):
